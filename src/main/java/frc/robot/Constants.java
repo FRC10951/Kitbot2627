@@ -1,0 +1,438 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
+package frc.robot;
+
+/**
+ * Robot-wide constants: CAN IDs, current limits, voltages, and operator
+ * scaling.
+ * See README.md for hardware mapping and behavior.
+ */
+public final class Constants {
+  public static final class DriveConstants {
+    public static final int LEFT_LEADER_ID = 11;
+    public static final int LEFT_FOLLOWER_ID = 8;
+    public static final int RIGHT_LEADER_ID = 10;
+    public static final int RIGHT_FOLLOWER_ID = 7;
+
+    public static final int DRIVE_MOTOR_CURRENT_LIMIT = 60;
+    /** Wheel diameter in meters (e.g. 6 in ~ 0.1524 m). */
+    public static final double WHEEL_DIAMETER_METERS = 0.1524;
+    /** Gear ratio motor-to-wheel (e.g. 10.71 for KitBot). */
+    public static final double GEAR_RATIO = 2.25;
+
+    /**
+     * Approximate track width (meters) used for encoder-only in-place turns.
+     * Measure center-to-center distance between left and right wheels for best
+     * results.
+     */
+    public static final double DRIVE_TRACK_WIDTH_METERS = 0.55;
+
+    /** Drivetrain wiggle throttle while shooting (20% above nominal 0.45). */
+    public static final double INTAKE_WIGGLE_SPEED = 0.45 * 1.2;
+    /**
+     * Forward half of each wiggle cycle uses this fraction of {@link #INTAKE_WIGGLE_SPEED}
+     * (reverse half stays at full magnitude) to trim net forward creep.
+     */
+    public static final double INTAKE_WIGGLE_FORWARD_SPEED_SCALE = 0.95;
+
+    /**
+     * Half-period (seconds) per wiggle segment while shooting (20% quicker than
+     * nominal 0.10 s).
+     */
+    public static final double INTAKE_WIGGLE_HALF_PERIOD_SECONDS = 0.10 / 1.2;
+
+    /**
+     * While shooting, one longer full shake at this interval (seconds). Same
+     * throttle
+     * as the small wiggle; normal wiggle runs for the remainder of each interval.
+     */
+    public static final double INTAKE_WIGGLE_HARD_SHAKE_INTERVAL_SECONDS = 2.0;
+
+    /**
+     * Each half of the periodic large shake lasts this multiple of
+     * {@link #INTAKE_WIGGLE_HALF_PERIOD_SECONDS}
+     * (same {@link #INTAKE_WIGGLE_SPEED} as the small wiggle, so the robot moves
+     * farther each way).
+     */
+    public static final double INTAKE_WIGGLE_HARD_SHAKE_HALF_PERIOD_MULTIPLIER = 3.0;
+
+    /**
+     * When {@code true}, {@link frc.robot.subsystems.CANDriveSubsystem#commandIntakeWiggleWhileShooting()}
+     * inserts the periodic large shake between normal wiggle segments. When {@code false}, only the
+     * small continuous wiggle runs while shooting.
+     */
+    public static final boolean INTAKE_WIGGLE_LARGE_SHAKE_ENABLED = false;
+
+    /**
+     * Scalar applied to encoder-only turn distance calculations.
+     * If the robot over-rotates, decrease this; if it under-rotates, increase it.
+     */
+    public static final double AUTO_TURN_DISTANCE_SCALAR = 0.125;
+  }
+
+  /**
+   * Rough physical parameters for desktop simulation only ({@code simulateJava}).
+   * Tune MOI if you need encoder traces to match hardware better.
+   */
+  public static final class SimulationConstants {
+    public static final double SHOOTER_FLYWHEEL_J_KG_M2 = 0.0004;
+    public static final double INTAKE_ROLLER_J_KG_M2 = 0.00015;
+    public static final double LOADER_ROLLER_J_KG_M2 = 0.00005;
+    /** Drivetrain moment of inertia about the robot center (kg m^2). */
+    public static final double DRIVEBASE_J_KG_M2 = 5.0;
+    /** Robot mass for simulation (38 kg). */
+    public static final double DRIVEBASE_MASS_KG = 38.0;
+  }
+
+  /**
+   * Battery thresholds for dashboard / {@link frc.robot.MatchReadiness}. Code
+   * does
+   * not automatically block shooting when low; tune on your robot.
+   */
+  public static final class ElectricalConstants {
+    /**
+     * Below this RoboRIO-reported bus voltage (V), brownouts are more likely and
+     * shooter wheel regulation may not hold RPM reliably. Do not trust marginal
+     * shots for critical scoring; reduce simultaneous motor load (drive + intake)
+     * and let the battery recover, or retune PID/FF for lower-voltage behavior.
+     * Measure under full match load and adjust this threshold.
+     */
+    public static final double MIN_BATTERY_VOLTS_FOR_CRITICAL_SHOT = 10.5;
+    /**
+     * Below this voltage, {@link frc.robot.MatchReadiness#isBatteryInCautionBand()}
+     * is true (still at or above {@link #MIN_BATTERY_VOLTS_FOR_CRITICAL_SHOT}).
+     */
+    public static final double BATTERY_CAUTION_VOLTS = 11.0;
+  }
+
+  public static final class IoConstants {
+    /** Flywheel Kraken X60 on Talon FX (CAN id unchanged from prior wiring). */
+    public static final int IO_MOTOR_ID = 9;
+    /**
+     * Intake Kraken X60 on Talon FX (12) - pulls fuel from floor/storage.
+     * Anti-clockwise = intake; clockwise = spit out.
+     */
+    public static final int INTAKE_MOTOR_ID = 12;
+    public static final int LOADER_MOTOR_ID = 19;
+
+    /**
+     * CAN bus for flywheel and intake {@code TalonFX} instances. Leave empty for
+     * the RoboRIO onboard CAN. If those controllers are on a CANivore, set this to
+     * the bus name shown in Phoenix Tuner (e.g. {@code "canivore"}), or the code
+     * will never see those devices and you will get stale-frame / firmware
+     * errors.
+     *
+     * <p>
+     * If those CAN IDs still have SPARK MAX controllers, Phoenix will never
+     * get a reply (same console spam); use Talon FX hardware or revert the
+     * subsystem to SPARK for those motors.
+     */
+    public static final String IO_TALONFX_CAN_BUS = "";
+
+    /** Current limits (amps) for IO / intake / loader motors. */
+    public static final int IO_MOTOR_CURRENT_LIMIT = 60;
+    public static final int INTAKE_MOTOR_CURRENT_LIMIT = 60;
+    public static final int LOADER_MOTOR_CURRENT_LIMIT = 60;
+    /** Current limit (amps) for the shooter flywheel motor. */
+    public static final int FLYWHEEL_MOTOR_CURRENT_LIMIT = 60;
+
+    // -----------------------------------------------------------------------
+    // Shooter / intake speed control (encoder-based)
+    // -----------------------------------------------------------------------
+
+    /** Target shooter speed (RPM) for the main shooting/intake command. */
+    public static final double INTAKE_TARGET_SPEED_INTAKE_RPM = 500.0;
+    /** Target shooter speed (RPM) for the 50% spin-up toggle. */
+    public static final double SHOOTER_TARGET_SPEED_SPINUP50_RPM = 1500.0;
+    /** Target shooter speed (RPM) when using the right-trigger toggle. */
+    public static final double SHOOTER_TARGET_SPEED_TOGGLE_RPM = INTAKE_TARGET_SPEED_INTAKE_RPM;
+    /** Target shooter speed (RPM) for the main launch shot. */
+    public static final double SHOOTER_TARGET_SPEED_LAUNCH_RPM = 2800.0;
+    /** Target shooter speed (RPM) for a high-speed shot (A buttosn). */
+    public static final double SHOOTER_TARGET_SPEED_HIGH_RPM = 3300.0;
+    /** Target shooter speed (RPM) for an ultra-speed shot (long range). */
+    public static final double SHOOTER_TARGET_SPEED_ULTRA_RPM = 4000.0;
+
+    /** Proportional gain for shooter velocity PID (RPM to volts via loop). */
+    public static final double SHOOTER_KP = 0.003;
+    /** Integral gain; reduces steady-state RPM error (tune on robot). */
+    public static final double SHOOTER_KI = 4.0e-4;
+    /**
+     * Derivative gain on RPM error. Often left at 0 for encoder velocity (noisy);
+     * increase slightly only if you see slow oscillation and logs look clean.
+     */
+    public static final double SHOOTER_KD = 0.0;
+
+    /**
+     * Fraction of target speed below which we apply max voltage to spin up quickly.
+     * For example, 0.8 means full voltage until 80% of target speed is reached.
+     */
+    public static final double SHOOTER_SPINUP_THRESHOLD_FRACTION = 0.9;
+
+    /** Maximum voltage the shooter is ever commanded to (absolute value). */
+    public static final double SHOOTER_MAX_VOLTAGE = 12.0;
+
+    /**
+     * Nominal voltage used as a baseline during speed holding; combined with PID as
+     * feedforward {@code ff = SHOOTER_VELOCITY_FF_VOLTS_PER_RPM * targetRpm}.
+     */
+    public static final double SHOOTER_HOLD_BASE_VOLTAGE = 7.0;
+
+    /**
+     * Feedforward volts per RPM (matches hold voltage at launch speed). PID trims
+     * residual error.
+     */
+    public static final double SHOOTER_VELOCITY_FF_VOLTS_PER_RPM = SHOOTER_HOLD_BASE_VOLTAGE
+        / SHOOTER_TARGET_SPEED_LAUNCH_RPM;
+
+    /**
+     * Static friction term (volts) for
+     * {@link edu.wpi.first.math.controller.SimpleMotorFeedforward}.
+     * Leave 0 until SysId; then paste characterized kS here.
+     */
+    public static final double SHOOTER_KS_VOLTS = 0.0;
+    /**
+     * Acceleration feedforward (volts per (RPM/s)); 0 until SysId characterizes kA
+     * in these units.
+     */
+    public static final double SHOOTER_KA_VOLTS_PER_RPM_PER_S = 0.0;
+
+    // -----------------------------------------------------------------------
+    // Intake speed control (encoder-based, same pattern as shooter)
+    // -----------------------------------------------------------------------
+
+    /** Target intake speed (RPM) for intake/feed behavior. Negative = intake in. */
+    public static final double INTAKE_TARGET_SPEED_RPM = -2500.0;
+    /** Proportional gain for intake velocity PID. */
+    public static final double INTAKE_KP = 0.0025;
+    /** Integral gain (tune on robot). */
+    public static final double INTAKE_KI = 3.0e-4;
+    /** Derivative gain; often 0 for encoder velocity. */
+    public static final double INTAKE_KD = 0.0;
+    /** Spin-up threshold fraction before switching to hold control. */
+    public static final double INTAKE_SPINUP_THRESHOLD_FRACTION = 0.8;
+    /** Absolute maximum intake voltage command. */
+    public static final double INTAKE_MAX_VOLTAGE = 11.5;
+    /** Baseline intake hold voltage (signed toward intake direction). */
+    public static final double INTAKE_HOLD_BASE_VOLTAGE = -6.9;
+
+    /**
+     * Feedforward volts per RPM (matches hold at {@link #INTAKE_TARGET_SPEED_RPM}).
+     */
+    public static final double INTAKE_VELOCITY_FF_VOLTS_PER_RPM = INTAKE_HOLD_BASE_VOLTAGE / INTAKE_TARGET_SPEED_RPM;
+
+    /** Intake static friction (volts); 0 until SysId. */
+    public static final double INTAKE_KS_VOLTS = 0.0;
+    /** Intake acceleration FF (volts per (RPM/s)); 0 until SysId. */
+    public static final double INTAKE_KA_VOLTS_PER_RPM_PER_S = 0.0;
+
+    // -----------------------------------------------------------------------
+    // Intake jam detection (stall / current) — pause then brief reverse
+    // -----------------------------------------------------------------------
+
+    /**
+     * When {@code true}, sustained jam (stator spike or stall) triggers
+     * pause-and-reverse recovery. When {@code false}, that failsafe is off and the
+     * intake uses only normal closed-loop / command behavior.
+     */
+    public static final boolean INTAKE_JAM_REVERSE_FAILSAFE_ENABLED = true;
+
+    /**
+     * After intaking-in starts, ignore jam logic for this long so spin-up current /
+     * low RPM does not trip recovery.
+     */
+    public static final double INTAKE_JAM_GRACE_SECONDS = 0.45;
+    /**
+     * Stator current magnitude (A) at or above this counts as a jam spike (after
+     * grace). Tune below the Talon limit but above steady intaking.
+     */
+    public static final double INTAKE_JAM_STATOR_SPIKE_AMPS = 52.0;
+    /**
+     * With |RPM| at or below {@link #INTAKE_JAM_STALL_RPM}, stator must also reach
+     * this level so a slow free spin does not count as a stall.
+     */
+    public static final double INTAKE_JAM_STALL_MIN_STATOR_AMPS = 28.0;
+    /** Treat |encoder RPM| at or below this as stalled while intaking in. */
+    public static final double INTAKE_JAM_STALL_RPM = 90.0;
+    /** Jam condition must hold continuously for this long before recovery runs. */
+    public static final double INTAKE_JAM_DEBOUNCE_SECONDS = 2.0;
+    /** Zero volts on the intake before reversing. */
+    public static final double INTAKE_JAM_PAUSE_SECONDS = 0.22;
+    /**
+     * Open-loop voltage (positive = spit per mechanism wiring) during jam
+     * reverse; use full headroom for a short, sharp clear.
+     */
+    public static final double INTAKE_JAM_REVERSE_VOLTAGE = INTAKE_MAX_VOLTAGE;
+    /** Reverse pulse length before resuming intaking (keep under ~0.2 s). */
+    public static final double INTAKE_JAM_REVERSE_SECONDS = 0.14;
+    /**
+     * After a recovery cycle, ignore new jam detections until this much time passes
+     * so sensors do not immediately re-trigger.
+     */
+    public static final double INTAKE_JAM_POST_RECOVERY_COOLDOWN_SECONDS = 0.35;
+
+    // -----------------------------------------------------------------------
+    // Intake / loader outputs (still open-loop on those motors)
+    // -----------------------------------------------------------------------
+
+    /** Intake motor voltage when feeding balls toward the shooter. */
+    public static final double INTAKING_INTAKE_OUTPUT = -11.5;
+    /**
+     * Loader target voltage when feeding balls toward the shooter.
+     * Sign controls direction; use negative to invert.
+     */
+    public static final double LOADER_MOTOR_TARGET_VOLTAGE = -6.0;
+    /**
+     * Loader duty cycle (0-1) corresponding to {@link #LOADER_MOTOR_TARGET_VOLTAGE}
+     * on a 12 V bus.
+     */
+    public static final double INTAKING_LOADER_OUTPUT = LOADER_MOTOR_TARGET_VOLTAGE / 12.0;
+
+    public static final double PREPARING_LOADER_OUTPUT = 0.0;
+
+    /**
+     * Loader duty cycle (0-1) for launching at fixed speed (opposite direction of
+     * intake).
+     */
+    public static final double LAUNCHING_LOADER_OUTPUT = -INTAKING_LOADER_OUTPUT;
+
+    /**
+     * Wait 1 second for the shooter to spin super fast before throwing the ball
+     * into it.
+     */
+    public static final double LAUNCH_SPIN_UP_SECONDS = 1.0;
+
+    /**
+     * How long to wait for the shooter to spin up when eating balls (0 means don't
+     * wait).
+     */
+    public static final double INTAKE_SPIN_UP_SECONDS = 0;
+
+    /**
+     * How long to wait for the shooter to spin up during the robot's self-driving
+     * mode.
+     */
+    public static final double INTAKE_AUTON_SPIN_UP_SECONDS = 2;
+
+    /** Power to keep the shooter halfway spun up so it's ready quickly. */
+    public static final double FLYWHEEL_SPIN_UP_50_VOLTAGE = 6.0;
+
+    /**
+     * How long the intake stays on when we do a pulsing wiggle (shoot sequence).
+     * Total cycle is 2 seconds.
+     */
+    public static final double INTAKE_PULSE_ON_SECONDS = 0.2;
+    /**
+     * How long the intake stays off during the pulsing wiggle (shoot sequence).
+     * Total cycle is 2 seconds.
+     */
+    public static final double INTAKE_PULSE_OFF_SECONDS = 2.0;
+
+    /**
+     * Logical grouping of CAN IDs for the IO / intake / loader motors. This
+     * allows subsystems to accept a single argument instead of three separate
+     * IDs, keeping wiring changes localized.
+     */
+    public static final class IoCanIdGroup {
+      public final int ioMotorId;
+      public final int intakeMotorId;
+      public final int loaderMotorId;
+      /** Empty string means RoboRIO CAN; otherwise Phoenix CAN bus name. */
+      public final String talonFxCanBus;
+
+      public IoCanIdGroup(int ioMotorId, int intakeMotorId, int loaderMotorId) {
+        this(ioMotorId, intakeMotorId, loaderMotorId, IO_TALONFX_CAN_BUS);
+      }
+
+      public IoCanIdGroup(
+          int ioMotorId, int intakeMotorId, int loaderMotorId, String talonFxCanBus) {
+        this.ioMotorId = ioMotorId;
+        this.intakeMotorId = intakeMotorId;
+        this.loaderMotorId = loaderMotorId;
+        this.talonFxCanBus = talonFxCanBus == null ? "" : talonFxCanBus.trim();
+      }
+    }
+
+    /** Default CAN ID group for the production robot. */
+    public static final IoCanIdGroup IO_CAN_IDS = new IoCanIdGroup(IO_MOTOR_ID, INTAKE_MOTOR_ID, LOADER_MOTOR_ID);
+  }
+
+  /**
+   * Autonomous constants based on FRC 2026 REBUILT field.
+   * Field: 317.7 in x 651.2 in. Center line bisects the 651.2 in length.
+   * HUB is 158.6 in (~4.03 m) from each alliance wall; center to HUB ~ 167 in
+   * (4.24 m).
+   * We drive from center toward our HUB and stop at estimated shooting range (~2
+   * m in front of HUB).
+   */
+  public static final class AutoConstants {
+    /**
+     * Drive distance from center line to shooting position (meters). Tune for your
+     * shooter range.
+     */
+    public static final double CENTER_TO_SHOOT_DRIVE_METERS = 2.25;
+    /** Forward speed for center-to-shoot drive [0, 1]. */
+    public static final double CENTER_TO_SHOOT_SPEED = 0.6;
+    /** How long to run the launcher to shoot preload (seconds). */
+    public static final double CENTER_TO_SHOOT_LAUNCH_SECONDS = 3.0;
+
+    /** Basic auto: shoot duration (seconds). */
+    public static final double BASIC_SHOOT_SECONDS = 3.0;
+    /**
+     * Basic auto: turn 30 deg starboard (right) - rotation rate [0, 1]. Positive =
+     * right.
+     */
+    public static final double TURN_30_STARBOARD_SPEED = 0.35;
+    /**
+     * Basic auto: time (seconds) to turn ~30 deg starboard. Tune to match robot.
+     */
+    public static final double TURN_30_STARBOARD_SECONDS = 1.2;
+    /** Basic auto: drive forward while intaking - duration (seconds). */
+    public static final double DRIVE_AND_INTAKE_SECONDS = 3.0;
+    /** Basic auto: forward speed [0, 1] during drive-and-intake. */
+    public static final double DRIVE_AND_INTAKE_SPEED = 0.5;
+  }
+
+  public static final class OperatorConstants {
+    public static final int DRIVER_CONTROLLER_PORT = 0;
+    public static final int OPERATOR_CONTROLLER_PORT = 1;
+    public static final double DRIVE_SCALING = 1.0;
+    public static final double ROTATION_SCALING = 1.0;
+    /**
+     * Deadband for driver sticks (arcade drive). Values with absolute magnitude
+     * below this are treated as zero to reduce drift.
+     */
+    public static final double DRIVE_DEADBAND = 0.08;
+    /**
+     * Threshold for treating a trigger as "pressed" for command bindings. This
+     * keeps the behavior consistent across LT/RT usages.
+     */
+    public static final double TRIGGER_THRESHOLD = 0.5;
+  }
+
+  private static String talonFxBusSuffix() {
+    String bus = IoConstants.IO_TALONFX_CAN_BUS == null ? "" : IoConstants.IO_TALONFX_CAN_BUS.trim();
+    return bus.isEmpty() ? " (roboRIO CAN)" : (" (CAN bus \"" + bus + "\")");
+  }
+
+  /**
+   * Returns a formatted list of all CAN IDs for logging or display.
+   */
+  public static String getCanIdsList() {
+    return String.join("\n",
+        "========== CAN IDs ==========",
+        "Drivetrain:",
+        "  Left  leader:  " + DriveConstants.LEFT_LEADER_ID,
+        "  Left  follower: " + DriveConstants.LEFT_FOLLOWER_ID,
+        "  Right leader:  " + DriveConstants.RIGHT_LEADER_ID,
+        "  Right follower: " + DriveConstants.RIGHT_FOLLOWER_ID,
+        "",
+        "IO / Loader:",
+        "  Flywheel (Kraken X60 / Talon FX): " + IoConstants.IO_MOTOR_ID + talonFxBusSuffix(),
+        "  Intake (Kraken X60 / Talon FX):  " + IoConstants.INTAKE_MOTOR_ID + talonFxBusSuffix(),
+        "  Loader (SPARK MAX):              " + IoConstants.LOADER_MOTOR_ID,
+        "=============================");
+  }
+}
